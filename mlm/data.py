@@ -98,9 +98,10 @@ def one_hot(data):
     # Map integer categorical features to one-hot representation
     for col in data_int:
         col_onehot = pd.get_dummies(data_int[col], prefix=col).astype(float)
-        data_onehot = pd.concat([data_onehot, col_onehot], axis=1)
+        data_onehot = pd.concat([data_onehot, col_onehot, ], axis=1)
+    data = pd.concat([data_onehot, data.iloc[:, -1]], axis=1)
 
-    return data_onehot
+    return data
 
 
 def train_test(data):

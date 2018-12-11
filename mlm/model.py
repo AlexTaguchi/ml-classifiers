@@ -2,63 +2,13 @@
 
 # Modules
 from mlm.data import one_hot
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB, MultinomialNB
+from sklearn.svm import SVC
 
 
-class Logistic:
-    """
-    Logistic regression classifier
-    """
-
-    def __init__(self):
-        pass
-
-    def train(self, train):
-
-        # Instantiate the classifiers
-        mlr = LogisticRegression(solver='sag', max_iter=10000, multi_class='multinomial')
-        ovr = LogisticRegression(solver='sag', max_iter=10000, multi_class='ovr')
-
-        # Train classifier
-        mlr.fit(train.iloc[:, :-1], train.iloc[:, -1])
-        ovr.fit(train.iloc[:, :-1], train.iloc[:, -1])
-
-        return mlr, ovr
-
-    def predict(self, feature, mlr, ovr):
-
-        # Predict labels
-        return mlr.predict(feature), ovr.predict(feature)
-
-
-    def __call__(self, train, test):
-
-        # Convert train and test to one-hot
-        train = one_hot(train)
-        test = one_hot(test)
-
-        # Train Gaussian and Multinomial classifiers
-        mlr, ovr = self.train(train)
-
-        # Predict train and test labels
-        train_pred_mlr, train_pred_ovr = self.predict(train.iloc[:, :-1], mlr, ovr)
-        test_pred_mlr, test_pred_ovr = self.predict(test.iloc[:, :-1], mlr, ovr)
-
-        # Print results
-        print('==========LOGISTIC REGRESSION==========')
-        train_hit_mlr = (train.iloc[:, -1] == train_pred_mlr).sum()
-        train_hit_ovr = (train.iloc[:, -1] == train_pred_ovr).sum()
-        test_hit_mlr = (test.iloc[:, -1] == test_pred_mlr).sum()
-        test_hit_ovr = (test.iloc[:, -1] == test_pred_ovr).sum()
-        print('Train accuracy:  %.2f%% (Multinomial), %.2f%% (One-vs-Rest)'
-              % (100 * train_hit_mlr / len(train), 100 * train_hit_ovr / len(train)))
-        print('Test accuracy:   %.2f%% (Multinomial), %.2f%% (One-vs-Rest)'
-              % (100 * test_hit_mlr / len(test), 100 * test_hit_ovr / len(test)))
-        print('')
-
-
-class Bayes:
+class NaiveBayes:
     """
     Naive Bayes classifier
     """
@@ -125,3 +75,127 @@ class Bayes:
         print('Test accuracy:   %.2f%%'
               % (100 * test_hit / len(test)))
         print('')
+
+
+class Logistic:
+    """
+    Logistic regression classifier
+    """
+
+    def __init__(self):
+        pass
+
+    def train(self, train):
+
+        # Instantiate the classifiers
+        mlr = LogisticRegression(solver='sag', max_iter=1000, n_jobs=-1,
+                                 multi_class='multinomial')
+        ovr = LogisticRegression(solver='sag', max_iter=1000, n_jobs=-1,
+                                 multi_class='ovr')
+
+        # Train classifier
+        mlr.fit(train.iloc[:, :-1], train.iloc[:, -1])
+        ovr.fit(train.iloc[:, :-1], train.iloc[:, -1])
+
+        return mlr, ovr
+
+    def predict(self, feature, mlr, ovr):
+
+        # Predict labels
+        return mlr.predict(feature), ovr.predict(feature)
+
+
+    def __call__(self, train, test):
+
+        # Convert train and test to one-hot
+        train = one_hot(train)
+        test = one_hot(test)
+
+        # Train Logistic regression classifiers
+        mlr, ovr = self.train(train)
+
+        # Predict train and test labels
+        train_pred_mlr, train_pred_ovr = self.predict(train.iloc[:, :-1], mlr, ovr)
+        test_pred_mlr, test_pred_ovr = self.predict(test.iloc[:, :-1], mlr, ovr)
+
+        # Print results
+        print('==========LOGISTIC REGRESSION==========')
+        train_hit_mlr = (train.iloc[:, -1] == train_pred_mlr).sum()
+        train_hit_ovr = (train.iloc[:, -1] == train_pred_ovr).sum()
+        test_hit_mlr = (test.iloc[:, -1] == test_pred_mlr).sum()
+        test_hit_ovr = (test.iloc[:, -1] == test_pred_ovr).sum()
+        print('Train accuracy:  %5.2f%% (Multinomial), %6.2f%% (One-vs-Rest)'
+              % (100 * train_hit_mlr / len(train), 100 * train_hit_ovr / len(train)))
+        print('Test accuracy:   %5.2f%% (Multinomial), %6.2f%% (One-vs-Rest)'
+              % (100 * test_hit_mlr / len(test), 100 * test_hit_ovr / len(test)))
+        print('')
+
+
+class RandomForest:
+    """
+    Random Forest classifier
+    """
+
+    def __init__(self):
+        pass
+
+    def train(self, train, trees):
+
+        # Instantiate the classifiers
+        rfc = RandomForestClassifier(n_estimators=trees, n_jobs=-1)
+
+        # Train classifier
+        rfc.fit(train.iloc[:, :-1], train.iloc[:, -1])
+
+        return rfc
+
+    def predict(self, feature, rfc):
+
+        # Predict labels
+        return rfc.predict(feature)
+
+    def __call__(self, train, test):
+
+        # Convert train and test to one-hot
+        train = one_hot(train)
+        test = one_hot(test)
+
+        # Train Random Forest classifiers
+        rfc1 = self.train(train, 1)
+        rfc10 = self.train(train, 10)
+        rfc100 = self.train(train, 100)
+
+        # Predict train and test labels
+        train_pred_1 = self.predict(train.iloc[:, :-1], rfc1)
+        train_pred_10 = self.predict(train.iloc[:, :-1], rfc10)
+        train_pred_100 = self.predict(train.iloc[:, :-1], rfc100)
+        test_pred_1 = self.predict(test.iloc[:, :-1], rfc1)
+        test_pred_10 = self.predict(test.iloc[:, :-1], rfc10)
+        test_pred_100 = self.predict(test.iloc[:, :-1], rfc100)
+
+        # Print results
+        print('=============RANDOM FOREST=============')
+        train_hit_1 = (train.iloc[:, -1] == train_pred_1).sum()
+        train_hit_10 = (train.iloc[:, -1] == train_pred_10).sum()
+        train_hit_100 = (train.iloc[:, -1] == train_pred_100).sum()
+        test_hit_1 = (test.iloc[:, -1] == test_pred_1).sum()
+        test_hit_10 = (test.iloc[:, -1] == test_pred_10).sum()
+        test_hit_100 = (test.iloc[:, -1] == test_pred_100).sum()
+        print('Train accuracy:  %5.2f%% (1 trees), %6.2f%% (10 trees), %6.2f%% (100 trees)'
+              % (100 * train_hit_1 / len(train),
+                 100 * train_hit_10 / len(train),
+                 100 * train_hit_100 / len(train)))
+        print('Test accuracy:   %5.2f%% (1 trees), %6.2f%% (10 trees), %6.2f%% (100 trees)'
+              % (100 * test_hit_1 / len(test),
+                 100 * test_hit_10 / len(test),
+                 100 * test_hit_100 / len(test)))
+        print('')
+
+
+class SVM:
+    """
+    Support Vector Machine classifier
+    """
+
+    def __init__(self):
+        pass

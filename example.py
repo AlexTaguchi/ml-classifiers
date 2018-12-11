@@ -1,9 +1,9 @@
 # Import modules
 from mlm.data import clean_csv, cast_numeric, train_test
-from mlm.model import Bayes, Logistic
+from mlm.model import NaiveBayes, Logistic, RandomForest
 
 # Clean dataset
-data = clean_csv('data/titanic.csv')
+data = clean_csv('data/iris.csv')
 
 # Cast data to numeric representation
 data = cast_numeric(data)
@@ -12,9 +12,13 @@ data = cast_numeric(data)
 train, test = train_test(data)
 
 # Naive Bayes classifier
-bayes = Bayes()
+bayes = NaiveBayes()
 bayes(train, test)
 
 # Logistic Regression classifier
 logistic = Logistic()
 logistic(train, test)
+
+# Random Forest classifier
+forest = RandomForest()
+forest(train, test)
