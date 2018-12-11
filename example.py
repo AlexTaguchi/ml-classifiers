@@ -1,7 +1,6 @@
 # Import modules
-from mlm.data import clean_csv, cast_numeric
-from mlm.model import Bayes
-from sklearn.model_selection import train_test_split
+from mlm.data import clean_csv, cast_numeric, train_test
+from mlm.model import Bayes, Logistic
 
 # Clean dataset
 data = clean_csv('data/titanic.csv')
@@ -10,8 +9,12 @@ data = clean_csv('data/titanic.csv')
 data = cast_numeric(data)
 
 # Split into train and test sets
-train, test = train_test_split(data, test_size=0.2)
+train, test = train_test(data)
 
-# Run Naive Bayes classifier
+# Naive Bayes classifier
 bayes = Bayes()
 bayes(train, test)
+
+# Logistic Regression classifier
+logistic = Logistic()
+logistic(train, test)

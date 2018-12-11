@@ -1,7 +1,61 @@
 #!/usr/bin/env python3
 
 # Modules
+from mlm.data import one_hot
+from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB, MultinomialNB
+
+
+class Logistic:
+    """
+    Logistic regression classifier
+    """
+
+    def __init__(self):
+        pass
+
+    def train(self, train):
+
+        # Instantiate the classifiers
+        mlr = LogisticRegression(solver='sag', max_iter=10000, multi_class='multinomial')
+        ovr = LogisticRegression(solver='sag', max_iter=10000, multi_class='ovr')
+
+        # Train classifier
+        mlr.fit(train.iloc[:, :-1], train.iloc[:, -1])
+        ovr.fit(train.iloc[:, :-1], train.iloc[:, -1])
+
+        return mlr, ovr
+
+    def predict(self, feature, mlr, ovr):
+
+        # Predict labels
+        return mlr.predict(feature), ovr.predict(feature)
+
+
+    def __call__(self, train, test):
+
+        # Convert train and test to one-hot
+        train = one_hot(train)
+        test = one_hot(test)
+
+        # Train Gaussian and Multinomial classifiers
+        mlr, ovr = self.train(train)
+
+        # Predict train and test labels
+        train_pred_mlr, train_pred_ovr = self.predict(train.iloc[:, :-1], mlr, ovr)
+        test_pred_mlr, test_pred_ovr = self.predict(test.iloc[:, :-1], mlr, ovr)
+
+        # Print results
+        print('==========LOGISTIC REGRESSION==========')
+        train_hit_mlr = (train.iloc[:, -1] == train_pred_mlr).sum()
+        train_hit_ovr = (train.iloc[:, -1] == train_pred_ovr).sum()
+        test_hit_mlr = (test.iloc[:, -1] == test_pred_mlr).sum()
+        test_hit_ovr = (test.iloc[:, -1] == test_pred_ovr).sum()
+        print('Train accuracy:  %.2f%% (Multinomial), %.2f%% (One-vs-Rest)'
+              % (100 * train_hit_mlr / len(train), 100 * train_hit_ovr / len(train)))
+        print('Test accuracy:   %.2f%% (Multinomial), %.2f%% (One-vs-Rest)'
+              % (100 * test_hit_mlr / len(test), 100 * test_hit_ovr / len(test)))
+        print('')
 
 
 class Bayes:
@@ -23,7 +77,7 @@ class Bayes:
 
     def train(self, train_cat, train_num, train_labels):
 
-        # Instantiate the classifier
+        # Instantiate the classifiers
         mnb = MultinomialNB()
         gnb = GaussianNB()
 
@@ -37,7 +91,7 @@ class Bayes:
 
     def predict(self, feature_cat, feature_num, mnb, gnb):
 
-        # Predict train labels
+        # Predict labels
         cat_pred = mnb.predict_proba(feature_cat) if feature_cat.shape[1] else 0
         cat_pred *= feature_cat.shape[1]
         num_pred = gnb.predict_proba(feature_num) if feature_num.shape[1] else 0
@@ -63,10 +117,11 @@ class Bayes:
         test_pred = self.predict(test_cat, test_num, mnb, gnb)
 
         # Print results
-        print('==========MODEL PERFORMANCE==========')
+        print('==============NAIVE BAYES==============')
         train_hit = (train_labels == train_pred).sum()
         test_hit = (test_labels == test_pred).sum()
-        print('Train accuracy:  %d/%d (%.2f%%)'
-              % (train_hit, len(train), 100 * train_hit / len(train)))
-        print('Test accuracy:   %d/%d (%.2f%%)'
-              % (test_hit, len(test), 100 * test_hit / len(test)))
+        print('Train accuracy:  %.2f%%'
+              % (100 * train_hit / len(train)))
+        print('Test accuracy:   %.2f%%'
+              % (100 * test_hit / len(test)))
+        print('')
