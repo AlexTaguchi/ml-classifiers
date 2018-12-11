@@ -88,9 +88,9 @@ class Logistic:
     def train(self, train):
 
         # Instantiate the classifiers
-        mlr = LogisticRegression(solver='sag', max_iter=1000, n_jobs=-1,
+        mlr = LogisticRegression(solver='sag', max_iter=10000, n_jobs=-1,
                                  multi_class='multinomial')
-        ovr = LogisticRegression(solver='sag', max_iter=1000, n_jobs=-1,
+        ovr = LogisticRegression(solver='sag', max_iter=10000, n_jobs=-1,
                                  multi_class='ovr')
 
         # Train classifier
@@ -142,7 +142,10 @@ class RandomForest:
     def train(self, train, trees):
 
         # Instantiate the classifiers
-        rfc = RandomForestClassifier(n_estimators=trees, n_jobs=-1)
+        if trees == 1:
+            rfc = RandomForestClassifier(n_estimators=trees, n_jobs=-1, bootstrap=False)
+        else:
+            rfc = RandomForestClassifier(n_estimators=trees, n_jobs=-1, bootstrap=True)
 
         # Train classifier
         rfc.fit(train.iloc[:, :-1], train.iloc[:, -1])

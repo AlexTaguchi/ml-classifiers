@@ -3,7 +3,7 @@ from mlm.data import clean_csv, cast_numeric, train_test
 from mlm.model import NaiveBayes, Logistic, RandomForest
 
 # Clean dataset
-data = clean_csv('data/iris.csv')
+data = clean_csv('data/titanic.csv')
 
 # Cast data to numeric representation
 data = cast_numeric(data)
