@@ -2,10 +2,14 @@
 
 # Modules
 from mlm.data import one_hot
+import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB, MultinomialNB
 from sklearn.svm import SVC
+import torch
+import torch.nn as nn
+import torch.optim as optim
 
 
 class NaiveBayes:
@@ -202,3 +206,111 @@ class SVM:
 
     def __init__(self):
         pass
+
+    def train(self, train):
+
+        # Instantiate the classifier
+        svc = SVC()
+
+        # Train classifier
+        svc.fit(train.iloc[:, :-1], train.iloc[:, -1])
+
+        return svc
+
+    def predict(self, feature, svc):
+
+        # Predict labels
+        return svc.predict(feature)
+
+    def __call__(self, train, test):
+
+        # Convert train and test to one-hot
+        train = one_hot(train)
+        test = one_hot(test)
+
+        # Train support vector machine
+        svc = self.train(train)
+
+        # Predict train and test labels
+        train_pred = self.predict(train.iloc[:, :-1], svc)
+        test_pred = self.predict(test.iloc[:, :-1], svc)
+
+        # Print results
+        print('========SUPPORT VECTOR MACHINE=========')
+        train_hit = (train.iloc[:, -1] == train_pred).sum()
+        test_hit = (test.iloc[:, -1] == test_pred).sum()
+        print('Train accuracy:  %5.2f%% (Radial Basis Function)'
+              % (100 * train_hit / len(train)))
+        print('Test accuracy:   %5.2f%% (Radial Basis Function)'
+              % (100 * test_hit / len(test)))
+        print('')
+
+
+class NeuralNet:
+    """
+    Neural network with a single hidden layer
+    """
+
+    def __init__(self):
+        self.hidden = 100
+        self.batch = 50
+
+    def train(self, train):
+
+        # Convert train dataset to tensor
+        feature = torch.from_numpy(train.iloc[:, :-1].values).float()
+        label = torch.from_numpy(train.iloc[:, -1].values).long()
+
+        # Initialize the neural network
+        net = nn.Sequential(nn.Linear(feature.shape[1], self.hidden),
+                            nn.ReLU(),
+                            nn.Linear(self.hidden, len(set(train.iloc[:, -1]))))
+
+        # Optimizer
+        optimizer = optim.Adam(net.parameters(), lr=0.01)
+        criterion = nn.CrossEntropyLoss()
+
+        # Train classifier
+        for i in range(10000):
+
+            permutation = np.random.choice(feature.shape[0], self.batch)
+            optimizer.zero_grad()
+            output = net(feature[permutation])
+            loss = criterion(output, label[permutation])
+            loss.backward()
+            optimizer.step()
+
+        return net
+
+    def predict(self, feature, net):
+
+        # Convert to tensor
+        feature = torch.from_numpy(feature.values).float()
+
+        # Predict labels
+        return net(feature)
+
+    def __call__(self, train, test):
+
+        # Convert train and test to one-hot
+        train = one_hot(train)
+        test = one_hot(test)
+
+        # Train support vector machine
+        net = self.train(train)
+
+        # Predict train and test labels
+        train_pred = self.predict(train.iloc[:, :-1], net)
+        train_pred = train_pred.detach().numpy().argmax(axis=1)
+        test_pred = self.predict(test.iloc[:, :-1], net)
+        test_pred = test_pred.detach().numpy().argmax(axis=1)
+
+        # Print results
+        print('============NEURAL NETWORK=============')
+        train_hit = (train.iloc[:, -1].values == train_pred).sum()
+        test_hit = (test.iloc[:, -1].values == test_pred).sum()
+        print('Train accuracy:  %5.2f%% (Single Hidden Layer)'
+              % (100 * train_hit / len(train)))
+        print('Test accuracy:   %5.2f%% (Single Hidden Layer)'
+              % (100 * test_hit / len(test)))
+        print('')

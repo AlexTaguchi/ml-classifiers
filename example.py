@@ -1,6 +1,6 @@
 # Import modules
 from mlm.data import clean_csv, cast_numeric, train_test
-from mlm.model import NaiveBayes, Logistic, RandomForest
+from mlm.model import NaiveBayes, Logistic, RandomForest, SVM, NeuralNet
 
 # Clean dataset
 data = clean_csv('data/titanic.csv')
@@ -15,10 +15,18 @@ train, test = train_test(data)
 bayes = NaiveBayes()
 bayes(train, test)
 
-# Logistic Regression classifier
+# Logistic regression classifier
 logistic = Logistic()
 logistic(train, test)
 
-# Random Forest classifier
+# Random forest classifier
 forest = RandomForest()
 forest(train, test)
+
+# Support vector machine
+svm = SVM()
+svm(train, test)
+
+# Neural network
+net = NeuralNet()
+net(train, test)
