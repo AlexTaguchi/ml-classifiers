@@ -105,3 +105,6 @@ venv.bak/
 
 # PyCharm
 .idea/
+
+# ml-classifiers
+*.DS_Store
