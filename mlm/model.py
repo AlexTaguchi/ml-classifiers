@@ -1,22 +1,19 @@
 #!/usr/bin/env python3
 
 # Modules
-from mlm.data import one_hot
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB, MultinomialNB
 from sklearn.svm import SVC
+import time
 import torch
 import torch.nn as nn
 import torch.optim as optim
 
 
 class NaiveBayes:
-    """
-    Naive Bayes classifier
-    """
-
+    """Naive Bayes classifier"""
     def __init__(self):
         self.categorical = 'object'
         self.numerical = 'number'
@@ -55,6 +52,10 @@ class NaiveBayes:
 
     def __call__(self, train, test):
 
+        # Record start time
+        print('==============NAIVE BAYES==============')
+        start = time.time()
+
         # Split train and test into categorical and numerical features
         train_cat, train_num = self.cat_num_split(train.iloc[:, :-1])
         test_cat, test_num = self.cat_num_split(test.iloc[:, :-1])
@@ -71,21 +72,18 @@ class NaiveBayes:
         test_pred = self.predict(test_cat, test_num, mnb, gnb)
 
         # Print results
-        print('==============NAIVE BAYES==============')
         train_hit = (train_labels == train_pred).sum()
         test_hit = (test_labels == test_pred).sum()
         print('Train accuracy:  %.2f%%'
               % (100 * train_hit / len(train)))
         print('Test accuracy:   %.2f%%'
               % (100 * test_hit / len(test)))
+        print('Time: %.1f seconds' % (time.time() - start))
         print('')
 
 
 class Logistic:
-    """
-    Logistic regression classifier
-    """
-
+    """Logistic regression classifier"""
     def __init__(self):
         pass
 
@@ -104,16 +102,13 @@ class Logistic:
         return mlr, ovr
 
     def predict(self, feature, mlr, ovr):
-
-        # Predict labels
         return mlr.predict(feature), ovr.predict(feature)
-
 
     def __call__(self, train, test):
 
-        # Convert train and test to one-hot
-        train = one_hot(train)
-        test = one_hot(test)
+        # Record start time
+        print('==========LOGISTIC REGRESSION==========')
+        start = time.time()
 
         # Train Logistic regression classifiers
         mlr, ovr = self.train(train)
@@ -123,7 +118,6 @@ class Logistic:
         test_pred_mlr, test_pred_ovr = self.predict(test.iloc[:, :-1], mlr, ovr)
 
         # Print results
-        print('==========LOGISTIC REGRESSION==========')
         train_hit_mlr = (train.iloc[:, -1] == train_pred_mlr).sum()
         train_hit_ovr = (train.iloc[:, -1] == train_pred_ovr).sum()
         test_hit_mlr = (test.iloc[:, -1] == test_pred_mlr).sum()
@@ -132,14 +126,49 @@ class Logistic:
               % (100 * train_hit_mlr / len(train), 100 * train_hit_ovr / len(train)))
         print('Test accuracy:   %5.2f%% (Multinomial), %6.2f%% (One-vs-Rest)'
               % (100 * test_hit_mlr / len(test), 100 * test_hit_ovr / len(test)))
+        print('Time: %.1f seconds' % (time.time() - start))
+        print('')
+
+
+class SVM:
+    """Support Vector Machine classifier"""
+    def __init__(self):
+        pass
+
+    def train(self, train):
+        svc = SVC()
+        svc.fit(train.iloc[:, :-1], train.iloc[:, -1])
+        return svc
+
+    def predict(self, feature, svc):
+        return svc.predict(feature)
+
+    def __call__(self, train, test):
+
+        # Record start time
+        print('========SUPPORT VECTOR MACHINE=========')
+        start = time.time()
+
+        # Train support vector machine
+        svc = self.train(train)
+
+        # Predict train and test labels
+        train_pred = self.predict(train.iloc[:, :-1], svc)
+        test_pred = self.predict(test.iloc[:, :-1], svc)
+
+        # Print results
+        train_hit = (train.iloc[:, -1] == train_pred).sum()
+        test_hit = (test.iloc[:, -1] == test_pred).sum()
+        print('Train accuracy:  %5.2f%% (Radial Basis Function)'
+              % (100 * train_hit / len(train)))
+        print('Test accuracy:   %5.2f%% (Radial Basis Function)'
+              % (100 * test_hit / len(test)))
+        print('Time: %.1f seconds' % (time.time() - start))
         print('')
 
 
 class RandomForest:
-    """
-    Random Forest classifier
-    """
-
+    """Random Forest classifier"""
     def __init__(self):
         pass
 
@@ -157,15 +186,13 @@ class RandomForest:
         return rfc
 
     def predict(self, feature, rfc):
-
-        # Predict labels
         return rfc.predict(feature)
 
     def __call__(self, train, test):
 
-        # Convert train and test to one-hot
-        train = one_hot(train)
-        test = one_hot(test)
+        # Record start time
+        print('=============RANDOM FOREST=============')
+        start = time.time()
 
         # Train Random Forest classifiers
         rfc1 = self.train(train, 1)
@@ -181,7 +208,6 @@ class RandomForest:
         test_pred_100 = self.predict(test.iloc[:, :-1], rfc100)
 
         # Print results
-        print('=============RANDOM FOREST=============')
         train_hit_1 = (train.iloc[:, -1] == train_pred_1).sum()
         train_hit_10 = (train.iloc[:, -1] == train_pred_10).sum()
         train_hit_100 = (train.iloc[:, -1] == train_pred_100).sum()
@@ -196,61 +222,12 @@ class RandomForest:
               % (100 * test_hit_1 / len(test),
                  100 * test_hit_10 / len(test),
                  100 * test_hit_100 / len(test)))
-        print('')
-
-
-class SVM:
-    """
-    Support Vector Machine classifier
-    """
-
-    def __init__(self):
-        pass
-
-    def train(self, train):
-
-        # Instantiate the classifier
-        svc = SVC()
-
-        # Train classifier
-        svc.fit(train.iloc[:, :-1], train.iloc[:, -1])
-
-        return svc
-
-    def predict(self, feature, svc):
-
-        # Predict labels
-        return svc.predict(feature)
-
-    def __call__(self, train, test):
-
-        # Convert train and test to one-hot
-        train = one_hot(train)
-        test = one_hot(test)
-
-        # Train support vector machine
-        svc = self.train(train)
-
-        # Predict train and test labels
-        train_pred = self.predict(train.iloc[:, :-1], svc)
-        test_pred = self.predict(test.iloc[:, :-1], svc)
-
-        # Print results
-        print('========SUPPORT VECTOR MACHINE=========')
-        train_hit = (train.iloc[:, -1] == train_pred).sum()
-        test_hit = (test.iloc[:, -1] == test_pred).sum()
-        print('Train accuracy:  %5.2f%% (Radial Basis Function)'
-              % (100 * train_hit / len(train)))
-        print('Test accuracy:   %5.2f%% (Radial Basis Function)'
-              % (100 * test_hit / len(test)))
+        print('Time: %.1f seconds' % (time.time() - start))
         print('')
 
 
 class NeuralNet:
-    """
-    Neural network with a single hidden layer
-    """
-
+    """Neural network with a single hidden layer"""
     def __init__(self):
         self.hidden = 100
         self.batch = 50
@@ -283,18 +260,14 @@ class NeuralNet:
         return net
 
     def predict(self, feature, net):
-
-        # Convert to tensor
         feature = torch.from_numpy(feature.values).float()
-
-        # Predict labels
         return net(feature)
 
     def __call__(self, train, test):
 
-        # Convert train and test to one-hot
-        train = one_hot(train)
-        test = one_hot(test)
+        # Record start time
+        print('============NEURAL NETWORK=============')
+        start = time.time()
 
         # Train support vector machine
         net = self.train(train)
@@ -306,11 +279,11 @@ class NeuralNet:
         test_pred = test_pred.detach().numpy().argmax(axis=1)
 
         # Print results
-        print('============NEURAL NETWORK=============')
         train_hit = (train.iloc[:, -1].values == train_pred).sum()
         test_hit = (test.iloc[:, -1].values == test_pred).sum()
         print('Train accuracy:  %5.2f%% (Single Hidden Layer)'
               % (100 * train_hit / len(train)))
         print('Test accuracy:   %5.2f%% (Single Hidden Layer)'
               % (100 * test_hit / len(test)))
+        print('Time: %.1f seconds' % (time.time() - start))
         print('')
