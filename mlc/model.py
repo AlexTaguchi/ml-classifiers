@@ -10,6 +10,7 @@ import time
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from xgboost import XGBClassifier
 
 
 class NaiveBayes:
@@ -214,14 +215,51 @@ class RandomForest:
         test_hit_1 = (test.iloc[:, -1] == test_pred_1).sum()
         test_hit_10 = (test.iloc[:, -1] == test_pred_10).sum()
         test_hit_100 = (test.iloc[:, -1] == test_pred_100).sum()
-        print('Train accuracy:  %5.2f%% (1 trees), %6.2f%% (10 trees), %6.2f%% (100 trees)'
+        print('Train accuracy:  %5.2f%% (1 Trees), %6.2f%% (10 Trees), %6.2f%% (100 Trees)'
               % (100 * train_hit_1 / len(train),
                  100 * train_hit_10 / len(train),
                  100 * train_hit_100 / len(train)))
-        print('Test accuracy:   %5.2f%% (1 trees), %6.2f%% (10 trees), %6.2f%% (100 trees)'
+        print('Test accuracy:   %5.2f%% (1 Trees), %6.2f%% (10 Trees), %6.2f%% (100 Trees)'
               % (100 * test_hit_1 / len(test),
                  100 * test_hit_10 / len(test),
                  100 * test_hit_100 / len(test)))
+        print('Time: %.1f seconds' % (time.time() - start))
+        print('')
+
+
+class XGBoost:
+    """XGBoost"""
+    def __init__(self):
+        pass
+
+    def train(self, train):
+        xgb = XGBClassifier(max_depth=3, n_estimators=100)
+        xgb.fit(train.iloc[:, :-1], train.iloc[:, -1])
+        return xgb
+
+    def predict(self, feature, xgb):
+        return xgb.predict(feature)
+
+    def __call__(self, train, test):
+
+        # Record start time
+        print('================XGBOOST================')
+        start = time.time()
+
+        # Train support vector machine
+        xgb = self.train(train)
+
+        # Predict train and test labels
+        train_pred = self.predict(train.iloc[:, :-1], xgb)
+        test_pred = self.predict(test.iloc[:, :-1], xgb)
+
+        # Print results
+        train_hit = (train.iloc[:, -1] == train_pred).sum()
+        test_hit = (test.iloc[:, -1] == test_pred).sum()
+        print('Train accuracy:  %5.2f%% (Max Depth of 3, 100 Trees)'
+              % (100 * train_hit / len(train)))
+        print('Test accuracy:   %5.2f%% (Max Depth of 3, 100 Trees)'
+              % (100 * test_hit / len(test)))
         print('Time: %.1f seconds' % (time.time() - start))
         print('')
 
